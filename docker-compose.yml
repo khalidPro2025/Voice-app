@@ -9,7 +9,9 @@ services:
       - backend
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     environment:
       AWS_ENDPOINT_URL: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin

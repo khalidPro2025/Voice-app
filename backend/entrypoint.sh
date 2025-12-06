@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-# Run initialization (create MinIO bucket if needed, create DB tables)
+cd /app
+
+# Initialisation (bucket + tables)
 python -u app/init_service.py
 
-# Start uvicorn
+# Lancer FastAPI
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+
