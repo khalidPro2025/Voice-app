@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CleanSen360 Dashboard</title>
+</head>
+<body>
+  <h1>Inondations (temps réel)</h1>
+  <button onclick="load()">Actualiser</button>
+  <pre id="data"></pre>
+
+<script>
+async function load() {
+  const r = await fetch("http://localhost:8000/api/inondations");
+  document.getElementById("data").innerText = JSON.stringify(await r.json(), null, 2);
+}
+load();
+</script>
+
+</body>
+</html>

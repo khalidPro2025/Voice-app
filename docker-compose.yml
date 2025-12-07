@@ -1,31 +1,27 @@
 version: "3.9"
 
 services:
-  frontend:
-    build: ./frontend
+  mosquitto:
+    image: eclipse-mosquitto:2.0
     ports:
-      - "3000:3000"
-    depends_on:
-      - backend
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - mosq_data:/mosquitto/data
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+  postgres:
+    image: postgres:15
     environment:
-      AWS_ENDPOINT_URL: http://minio:9000
-      AWS_ACCESS_KEY_ID: minioadmin
-      AWS_SECRET_ACCESS_KEY: minioadmin
-      AWS_BUCKET_NAME: voice-uploads
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/voice_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cleansen
     ports:
-      - "8000:8000"
-    depends_on:
-      - minio
-      - postgres
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -36,17 +32,31 @@ services:
     volumes:
       - minio_data:/data
 
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: voice_db
+  backend:
+    build: ./backend
     ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      - "8000:8000"
+    depends_on:
+      - mosquitto
+      - postgres
+      - minio
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/cleansen
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: 1883
+      AWS_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_BUCKET_NAME: voice-uploads
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
 volumes:
-  minio_data:
   pgdata:
+  mosq_data:
+  minio_data:
